@@ -290,24 +290,6 @@
             margin-bottom: 2px;
         }
 
-        .c14n-help {
-            margin: -3px 0 13px;
-            padding: 9px 11px;
-            border-radius: 8px;
-            background: #f8fafc;
-            border: 1px solid var(--line);
-            color: #64748b;
-            font-size: 0.74rem;
-            line-height: 1.5;
-        }
-
-        .c14n-help strong {
-            display: block;
-            color: #334155;
-            font-size: 0.76rem;
-            margin-bottom: 2px;
-        }
-
         .hash-output {
             background: #0f172a;
             color: #7dd3fc;
@@ -425,28 +407,6 @@
             font-size: 0.68rem;
         }
 
-        .glosa-actions {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 13px;
-            padding-top: 13px;
-            border-top: 1px solid var(--line);
-        }
-
-        .glosa-file {
-            color: var(--muted);
-            font-size: 0.74rem;
-        }
-
-        .glosa-adjust-help {
-            margin: 5px 0 10px;
-            color: var(--muted);
-            font-size: 0.72rem;
-            line-height: 1.45;
-        }
-
         .glosa-editor-card {
             background: #fff;
             border: 1px solid var(--line);
@@ -471,12 +431,6 @@
             font-size: 0.73rem;
         }
 
-        .glosa-divider {
-            height: 1px;
-            background: var(--line);
-            margin: 16px 0 12px;
-        }
-
         .glosa-explanation {
             padding: 14px;
             border-radius: 9px;
@@ -492,21 +446,6 @@
             line-height: 1.5;
         }
 
-        .glosa-explanation .glosa-flow {
-            margin-top: 8px;
-        }
-
-        .glosa-explanation .glosa-flow span {
-            font-size: 0.68rem;
-            padding: 3px 7px 3px 4px;
-        }
-
-        .glosa-explanation .glosa-flow b {
-            width: 16px;
-            height: 16px;
-            font-size: 0.62rem;
-        }
-
         .glosa-editor-toolbar {
             display: flex;
             align-items: center;
@@ -516,25 +455,11 @@
             margin-bottom: 8px;
         }
 
-        .glosa-footer {
-            display: flex;
-            align-items: flex-end;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .glosa-name {
-            flex: 1 1 240px;
-            min-width: 210px;
-        }
-
-        .glosa-name .form-label {
-            margin-bottom: 3px;
-        }
-
-        .glosa-name .form-control {
-            height: 34px;
+        .glosa-adjust-help {
+            margin: 5px 0 10px;
+            color: var(--muted);
+            font-size: 0.72rem;
+            line-height: 1.45;
         }
 
         .xsd-help {
@@ -553,14 +478,6 @@
             color: #1e3a8a;
             font-size: 0.78rem;
             margin-bottom: 3px;
-        }
-
-        .xsd-help p {
-            margin: 0 0 5px;
-        }
-
-        .xsd-help p:last-child {
-            margin-bottom: 0;
         }
 
         .tiss-auto {
@@ -708,12 +625,6 @@
             line-height: 1.5;
         }
 
-        .divider {
-            height: 1px;
-            background: var(--line);
-            margin: 15px 0;
-        }
-
         @media (max-width: 991px) {
             .app-shell { padding: 14px; }
             .content-card { padding: 17px; }
@@ -729,13 +640,6 @@
             .editor-toolbar form { width: 100%; }
             .editor-toolbar form input[name="filename"] { flex: 1; width: auto !important; }
         }
- <div class="form-group">
-    <label for="versao-tiss">Versão do Padrão TISS (XSD):</label>
-    <select id="versao-tiss" class="form-control">
-        <option value="">Detectar automaticamente...</option>
-    </select>
-    <small id="sugestao-versao" style="color: #666; display: block; margin-top: 5px;"></small>
-</div>
     </style>
 </head>
 <body>
@@ -833,6 +737,15 @@
                                 <label class="form-label" for="hashEsperado">Hash esperado (opcional)</label>
                                 <input type="text" id="hashEsperado" class="form-control form-control-sm font-monospace"
                                        placeholder="Cole o hash para comparar">
+                            </div>
+
+                            <!-- SELETOR DE VERSÃO CORRIGIDO -->
+                            <div class="mb-3">
+                                <label class="form-label" for="versao-tiss">Versão do Padrão TISS (XSD)</label>
+                                <select id="versao-tiss" class="form-select form-select-sm">
+                                    <option value="">Detectar automaticamente...</option>
+                                </select>
+                                <small id="sugestao-versao" class="form-text text-muted" style="font-size: 0.7rem;"></small>
                             </div>
 
                             <div class="tiss-auto-help mb-2">
@@ -1126,6 +1039,58 @@
     document.getElementById('algoritmo').addEventListener('change', atualizarAjudaAlgoritmo);
     atualizarAjudaAlgoritmo();
 
+    // Carrega as versões disponíveis no seletor
+    async function carregarVersoesTISS() {
+        try {
+            const response = await fetch('/validar-tiss', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ xml: '<x/>', somente_versao: true })
+            });
+            const data = await response.json();
+            const select = document.getElementById('versao-tiss');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">Detectar automaticamente...</option>';
+            if (data.versoes_disponiveis) {
+                data.versoes_disponiveis.forEach(v => {
+                    select.innerHTML += `<option value="${v}">${v}</option>`;
+                });
+            }
+        } catch (e) {
+            console.error("Erro ao carregar versões:", e);
+        }
+    }
+
+    // Chama a sugestão de versão ao carregar o XML
+    async function sugerirVersaoTISS(xmlContent) {
+        if (!xmlContent || xmlContent.trim() === "") return;
+        try {
+            const response = await fetch('/validar-tiss', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ xml: xmlContent, somente_versao: true })
+            });
+            const data = await response.json();
+            const select = document.getElementById('versao-tiss');
+            const sugestao = document.getElementById('sugestao-versao');
+            if (!select || !sugestao) return;
+
+            if (data.versao) {
+                if (Array.from(select.options).some(opt => opt.value === data.versao)) {
+                    select.value = data.versao;
+                    sugestao.innerHTML = `💡 Versão <b>${data.versao}</b> detectada e selecionada.`;
+                } else {
+                    sugestao.innerHTML = `⚠️ Versão <b>${data.versao}</b> detectada, mas não está no servidor.`;
+                }
+            } else {
+                sugestao.innerHTML = "⚠️ Versão não detectada. Selecione manualmente.";
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
     function carregarArquivo(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -1134,6 +1099,7 @@
         const reader = new FileReader();
         reader.onload = e => {
             editor.setValue(e.target.result);
+            sugerirVersaoTISS(e.target.result); // Chama a sugestão
             setTimeout(validarXmlAns, 80);
         };
         reader.readAsText(file);
@@ -1158,10 +1124,11 @@
         status.textContent = texto;
     }
 
+    // BOTÃO BAIXAR CORRIGIDO (Não bloqueia mais)
     function baixarValidado() {
         if (!validadoParaDownload) {
-            mostrarStatusDownload('Valide o XML antes de baixar o arquivo validado.', 'warn');
-            return;
+            // Avisa, mas não bloqueia
+            mostrarStatusDownload('Atenção: o XML não passou pela validação. O download será feito mesmo assim.', 'warn');
         }
         prepararDownload();
         document.getElementById('formDownloadPrincipal').requestSubmit();
@@ -1224,52 +1191,7 @@
         }
     }
 
-    async function verificarVersao() {
-        const box = document.getElementById('resultadoTiss');
-        const xml = editor.getValue().trim();
-        if (!xml) {
-            box.hidden = false;
-            box.className = 'tiss-result warn';
-            box.innerHTML = '<strong>Nenhum XML carregado.</strong>';
-            return;
-        }
-
-        try {
-            const response = await fetch('/validar-tiss', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ xml: xml, somente_versao: true })
-            });
-            const data = await response.json();
-            box.hidden = false;
-            if (!data.detectada) {
-                box.className = 'tiss-result warn';
-                box.innerHTML = '<strong>Versão não identificada.</strong>' +
-                    escaparHtml(data.mensagem || 'Confira o campo Padrao do cabeçalho.');
-                return;
-            }
-            if (data.suportada) {
-                box.className = 'tiss-result ok';
-                box.innerHTML = '<strong>Versão detectada: ' + escaparHtml(data.versao) +
-                    '.</strong>XSD oficial disponível para validação.';
-            } else {
-                box.className = 'tiss-result warn';
-                box.innerHTML = '<strong>Versão detectada: ' + escaparHtml(data.versao) +
-                    '.</strong>Esta versão não possui XSD embarcado.';
-            }
-        } catch (erro) {
-            box.hidden = false;
-            box.className = 'tiss-result err';
-            box.innerHTML = '<strong>Falha ao consultar a versão.</strong>' + escaparHtml(erro.message);
-        }
-    }
-
-    function prepararDownloadGlosa() {
-        document.getElementById('glosaDownloadInput').value = glosaEditor.getValue();
-        const nome = document.getElementById('glosaFilename').value.trim() || 'recurso_glosa.xml';
-        document.getElementById('glosaFilenameDownload').value = nome;
-    }
-
+    // FUNÇÃO VALIDAR TISS CORRIGIDA (Envia a versão selecionada)
     async function validarTiss() {
         const box = document.getElementById('resultadoTiss');
         const xml = editor.getValue().trim();
@@ -1284,11 +1206,17 @@
         box.className = 'tiss-result warn';
         box.textContent = 'Identificando versão TISS e validando...';
 
+        // Pega a versão que o usuário escolheu no seletor
+        const versaoSelecionada = document.getElementById('versao-tiss').value;
+
         try {
             const response = await fetch('/validar-tiss', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ xml: xml })
+                body: JSON.stringify({ 
+                    xml: xml,
+                    versao_selecionada: versaoSelecionada // <-- Enviando a versão
+                })
             });
             const data = await response.json();
 
@@ -1465,14 +1393,10 @@
         }
     }
 
-    function carregarExemploGlosa() {
-        glosaEditor.setValue(EXEMPLO_GLOSA);
-        const nome = document.getElementById('glosaFilename');
-        if (!nome.value || nome.value === 'recurso_glosa.xml') {
-            nome.value = 'recurso_glosa_exemplo.xml';
-        }
-        document.getElementById('glosaArquivo').textContent = 'Exemplo de recurso carregado.';
-        glosaEditor.focus();
+    function prepararDownloadGlosa() {
+        document.getElementById('glosaDownloadInput').value = glosaEditor.getValue();
+        const nome = document.getElementById('glosaFilename').value.trim() || 'recurso_glosa.xml';
+        document.getElementById('glosaFilenameDownload').value = nome;
     }
 
     async function validarGlosa() {
@@ -1527,6 +1451,9 @@
             resultado.textContent = 'Falha ao validar: ' + erro.message;
         }
     }
+
+    // Inicializa a lista de versões ao carregar a página
+    document.addEventListener('DOMContentLoaded', carregarVersoesTISS);
 </script>
 </body>
 </html>
