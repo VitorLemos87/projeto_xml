@@ -1,4 +1,5 @@
 import hashlib
+import difflib
 import os
 import re
 from datetime import datetime
@@ -283,6 +284,97 @@ def atualizar_hash():
                               pretty_print=True).decode('utf-8')
 
     return jsonify({'sucesso': True, 'hash': digest, 'xml': novo_xml})
+
+
+@app.route('/ajustar-recurso-glosa', methods=['POST'])
+def ajustar_recurso_glosa():
+    """Ajusta tags de um XML que já é recurso de glosa e devolve as linhas alteradas."""
+    dados = request.get_json(silent=True) or {}
+    xml_conteudo = (dados.get('xml') or '').strip()
+
+    if not xml_conteudo:
+        return jsonify({'sucesso': False, 'mensagem': 'Nenhum XML foi informado.'}), 400
+
+    try:
+        root = etree.fromstring(xml_conteudo.encode('utf-8'))
+    except etree.XMLSyntaxError as exc:
+        return jsonify({'sucesso': False, 'mensagem': f'XML inválido: {exc}'}), 200
+
+    if etree.QName(root).localname != 'mensagemTISS':
+        return jsonify({
+            'sucesso': False,
+            'mensagem': 'O XML não é uma mensagem TISS. Carregue um recurso de glosa para ajustar.',
+        }), 200
+
+    ns = etree.QName(root).namespace
+    def tag(nome):
+        return f'{{{ns}}}{nome}' if ns else nome
+
+    def filho(elemento, nome):
+        return elemento.find(tag(nome))
+
+    def criar(elemento, nome):
+        return etree.SubElement(elemento, tag(nome))
+
+    alteracoes = []
+    cabecalho = filho(root, 'cabecalho')
+    if cabecalho is None:
+        return jsonify({'sucesso': False,
+                        'mensagem': 'O XML não possui o bloco <cabecalho>.'}), 200
+
+    identificacao = filho(cabecalho, 'identificacaoTransacao')
+    if identificacao is None:
+        return jsonify({'sucesso': False,
+                        'mensagem': 'O XML não possui <identificacaoTransacao>.'}), 200
+
+    tipo = filho(identificacao, 'tipoTransacao')
+    if tipo is None:
+        tipo = criar(identificacao, 'tipoTransacao')
+        alteracoes.append('Criado o campo tipoTransacao.')
+    if (tipo.text or '').strip().upper() != 'RECURSO_GLOSA':
+        anterior = (tipo.text or '').strip() or 'vazio'
+        tipo.text = 'RECURSO_GLOSA'
+        alteracoes.append(f'tipoTransacao alterado de "{anterior}" para "RECURSO_GLOSA".')
+
+    pp = filho(root, 'prestadorParaOperadora')
+    recurso = filho(pp, 'recursoGlosa') if pp is not None else None
+    guia = filho(recurso, 'guiaRecursoGlosa') if recurso is not None else None
+    if guia is None:
+        return jsonify({
+            'sucesso': False,
+            'mensagem': 'O XML não possui a estrutura prestadorParaOperadora/recursoGlosa/guiaRecursoGlosa.',
+        }), 200
+
+    epilogo = filho(root, 'epilogo')
+    if epilogo is None:
+        epilogo = criar(root, 'epilogo')
+        alteracoes.append('Criado o bloco <epilogo>.')
+    hash_el = filho(epilogo, 'hash')
+    if hash_el is None:
+        hash_el = criar(epilogo, 'hash')
+        hash_el.text = ''
+        alteracoes.append('Criado o campo <epilogo><hash>.')
+    elif not (hash_el.text or '').strip():
+        alteracoes.append('O campo <epilogo><hash> está vazio e deve ser calculado na aba XML & Hash.')
+
+    novo_xml = etree.tostring(root, xml_declaration=True, encoding='UTF-8',
+                              pretty_print=True).decode('utf-8')
+    antigas = xml_conteudo.splitlines()
+    novas = novo_xml.splitlines()
+    linhas = set()
+    comparador = difflib.SequenceMatcher(None, antigas, novas)
+    for operacao, _i1, _i2, j1, j2 in comparador.get_opcodes():
+        if operacao != 'equal':
+            linhas.update(range(j1 + 1, j2 + 1))
+
+    return jsonify({
+        'sucesso': True,
+        'xml': novo_xml,
+        'alteracoes': alteracoes,
+        'linhas_alteradas': sorted(linhas),
+        'mensagem': ('Nenhuma alteração necessária.' if not alteracoes else
+                     'XML ajustado para recurso de glosa.'),
+    })
 
 
 @app.route('/validar-tiss', methods=['POST'])

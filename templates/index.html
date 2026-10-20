@@ -131,12 +131,81 @@
             color: var(--muted);
         }
 
+        .xml-search {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .xml-search input {
+            flex: 1;
+            min-width: 0;
+            height: 32px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            padding: 0 10px;
+            color: #334155;
+            font-size: 0.78rem;
+            outline: none;
+        }
+
+        .xml-search input:focus {
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+        }
+
+        .xml-search button {
+            height: 32px;
+            padding: 0 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            background: #fff;
+            color: #475569;
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .xml-search button:hover {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .xml-search-status {
+            min-width: 96px;
+            color: var(--muted);
+            font-size: 0.7rem;
+            text-align: right;
+            white-space: nowrap;
+        }
+
         .CodeMirror {
             height: 535px;
             border-radius: 9px;
             font-size: 13px;
             font-family: 'Fira Code', Consolas, Monaco, monospace;
             border: 1px solid #dfe7ef;
+        }
+
+        .CodeMirror-selected {
+            background: rgba(96, 165, 250, 0.42) !important;
+        }
+
+        .CodeMirror .linha-alterada {
+            background: rgba(245, 158, 11, 0.22) !important;
+        }
+
+        .CodeMirror-focused .CodeMirror-selected {
+            background: rgba(59, 130, 246, 0.55) !important;
+        }
+
+        .CodeMirror-line::selection,
+        .CodeMirror-line > span::selection,
+        .CodeMirror-line > span > span::selection {
+            background: rgba(59, 130, 246, 0.55) !important;
+            color: #ffffff !important;
         }
 
         .side-card {
@@ -371,17 +440,71 @@
             font-size: 0.74rem;
         }
 
+        .glosa-adjust-help {
+            margin: 5px 0 10px;
+            color: var(--muted);
+            font-size: 0.72rem;
+            line-height: 1.45;
+        }
+
         .glosa-editor-card {
             background: #fff;
             border: 1px solid var(--line);
             border-radius: 10px;
             padding: 15px;
-            margin-top: 14px;
+            margin-top: 0;
         }
 
         .glosa-editor-card .CodeMirror {
-            height: 340px;
+            height: 420px;
             font-size: 12.5px;
+        }
+
+        .glosa-side .check-list {
+            grid-template-columns: 1fr;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .glosa-side .check-list li {
+            padding: 6px 8px;
+            font-size: 0.73rem;
+        }
+
+        .glosa-divider {
+            height: 1px;
+            background: var(--line);
+            margin: 16px 0 12px;
+        }
+
+        .glosa-explanation {
+            padding: 14px;
+            border-radius: 9px;
+        }
+
+        .glosa-explanation h2 {
+            font-size: 0.92rem;
+            margin-bottom: 4px;
+        }
+
+        .glosa-explanation p {
+            font-size: 0.76rem;
+            line-height: 1.5;
+        }
+
+        .glosa-explanation .glosa-flow {
+            margin-top: 8px;
+        }
+
+        .glosa-explanation .glosa-flow span {
+            font-size: 0.68rem;
+            padding: 3px 7px 3px 4px;
+        }
+
+        .glosa-explanation .glosa-flow b {
+            width: 16px;
+            height: 16px;
+            font-size: 0.62rem;
         }
 
         .glosa-editor-toolbar {
@@ -649,6 +772,12 @@
                         <div class="editor-toolbar">
                             <span class="editor-label">Documento XML</span>
                         </div>
+                        <div class="xml-search">
+                            <input type="search" id="buscaXml"
+                                   placeholder="Pesquisar nome completo ou parte do nome...">
+                            <button type="button" onclick="buscarXmlHash()">Pesquisar</button>
+                            <span id="buscaXmlStatus" class="xml-search-status"></span>
+                        </div>
                         <textarea id="xmlContent">{{ xml_content }}</textarea>
                     </div>
 
@@ -766,66 +895,86 @@
             </div>
 
             <div class="tab-pane fade" id="glosa-panel" role="tabpanel">
-                <div class="mx-auto" style="max-width: 980px;">
-                    <div class="glosa-editor-card">
-                        <div class="glosa-editor-toolbar">
-                            <span class="editor-label">XML do recurso</span>
-                            <div class="d-flex align-items-center flex-wrap gap-2">
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="glosa-editor-card">
+                            <div class="glosa-editor-toolbar">
+                                <span class="editor-label">XML do recurso</span>
+                            </div>
+                            <div class="xml-search">
+                                <input type="search" id="buscaGlosa"
+                                       placeholder="Pesquisar nome completo ou parte do nome...">
+                                <button type="button" onclick="buscarGlosa()">Pesquisar</button>
+                                <span id="buscaGlosaStatus" class="xml-search-status"></span>
+                            </div>
+                            <textarea id="glosaXmlContent"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="side-card glosa-side">
+                            <h2 class="side-title">Ações do recurso</h2>
+
+                            <div class="d-flex flex-wrap gap-2 mb-2">
                                 <label class="btn btn-outline-secondary btn-sm mb-0">
                                     Selecionar XML
                                     <input type="file" id="glosaFileInput" accept=".xml" hidden
                                            onchange="carregarGlosaArquivo(event)">
                                 </label>
                                 <button class="btn btn-outline-secondary btn-sm" type="button"
-                                        onclick="carregarExemploGlosa()">Carregar exemplo</button>
-                                <span id="glosaArquivo" class="glosa-file">Nenhum arquivo carregado.</span>
+                                        onclick="ajustarRecursoGlosa()">Ajustar recurso</button>
                             </div>
-                        </div>
-                        <textarea id="glosaXmlContent"></textarea>
+                            <p class="glosa-adjust-help">
+                                <strong>Ajustar recurso</strong> corrige o tipo da transação para
+                                <code>RECURSO_GLOSA</code>, completa o hash do epílogo e destaca as
+                                linhas alteradas. Use somente quando o XML já for um recurso de glosa.
+                            </p>
+                            <div id="glosaArquivo" class="glosa-file mb-2">Nenhum arquivo carregado.</div>
+                            <div id="glosaAjuste" class="glosa-file mb-2"></div>
 
-                        <div class="glosa-footer">
-                            <div class="glosa-name">
-                                <label class="form-label" for="glosaFilename">Nome do arquivo</label>
-                                <input type="text" id="glosaFilename" class="form-control form-control-sm"
-                                       value="recurso_glosa.xml" autocomplete="off">
+                            <label class="form-label" for="glosaFilename">Nome do arquivo</label>
+                            <input type="text" id="glosaFilename" class="form-control form-control-sm mb-2"
+                                   value="recurso_glosa.xml" autocomplete="off">
+
+                            <div class="d-flex gap-2 mb-2">
+                                <button class="btn btn-primary flex-grow-1 py-2" type="button" onclick="validarGlosa()">
+                                    Validar recurso de glosa
+                                </button>
+                                <form action="/download" method="POST" class="d-flex" style="margin:0;">
+                                    <input type="hidden" name="xml_download" id="glosaDownloadInput">
+                                    <input type="hidden" name="filename" id="glosaFilenameDownload">
+                                    <button type="submit" class="btn btn-outline-secondary px-3 py-2"
+                                            onclick="prepararDownloadGlosa()">Baixar</button>
+                                </form>
                             </div>
-                            <button class="btn btn-primary px-4 py-2" type="button" onclick="validarGlosa()">
-                                Validar recurso de glosa
-                            </button>
-                            <form action="/download" method="POST" class="d-flex" style="margin:0;">
-                                <input type="hidden" name="xml_download" id="glosaDownloadInput">
-                                <input type="hidden" name="filename" id="glosaFilenameDownload">
-                                <button type="submit" class="btn btn-outline-secondary px-4 py-2"
-                                        onclick="prepararDownloadGlosa()">Baixar</button>
-                            </form>
-                        </div>
-                        <div id="resultadoGlosa" class="result-box mt-3" style="display:none;"></div>
-                    </div>
 
-                    <div class="intro-card mt-3">
-                        <span class="intro-kicker">TISS · Recurso de glosa</span>
-                        <h2>Validar XML de recurso de glosa</h2>
-                        <p>
-                            O editor acima aceita o XML digitado, colado ou carregado de um arquivo.
-                            Depois de revisar, clique em <strong>Validar recurso de glosa</strong>.
-                            A validação confere a estrutura da mensagem <code>mensagemTISS</code>.
-                        </p>
-                        <div class="glosa-flow">
-                            <span><b>1</b> Carregue o XML</span>
-                            <span><b>2</b> Revise o conteúdo</span>
-                            <span><b>3</b> Valide a estrutura</span>
+                            <div id="resultadoGlosa" class="result-box mt-3" style="display:none;"></div>
                         </div>
-                        <ul class="check-list">
-                            <li>Elemento raiz <code>mensagemTISS</code></li>
-                            <li>Tipo de transação <code>RECURSO_GLOSA</code></li>
-                            <li>Cabeçalho e dados da transação</li>
-                            <li>Bloco <code>guiaRecursoGlosa</code></li>
-                            <li>Campos obrigatórios da guia</li>
-                            <li>Opção de recurso, itens ou guia completa</li>
-                            <li>Valores e datas em formato válido</li>
-                            <li>Aviso quando o hash do epílogo estiver vazio</li>
-                        </ul>
                     </div>
+                </div>
+
+                <div class="intro-card glosa-explanation mt-3">
+                    <span class="intro-kicker">TISS · Recurso de glosa</span>
+                    <h2>Validar XML de recurso de glosa</h2>
+                    <p>
+                        O editor acima aceita o XML digitado, colado ou carregado de um arquivo.
+                        Depois de revisar, clique em <strong>Validar recurso de glosa</strong>.
+                    </p>
+                    <div class="glosa-flow">
+                        <span><b>1</b> Carregue</span>
+                        <span><b>2</b> Revise</span>
+                        <span><b>3</b> Valide</span>
+                    </div>
+                    <ul class="check-list">
+                        <li>Raiz <code>mensagemTISS</code></li>
+                        <li>Tipo <code>RECURSO_GLOSA</code></li>
+                        <li>Cabeçalho e transação</li>
+                        <li>Bloco <code>guiaRecursoGlosa</code></li>
+                        <li>Campos obrigatórios da guia</li>
+                        <li>Opção, itens ou guia completa</li>
+                        <li>Valores e datas válidos</li>
+                        <li>Aviso de hash vazio</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -865,6 +1014,60 @@
             validadoParaDownload = false;
             mostrarStatusDownload('O XML foi alterado. Valide novamente antes de baixar.', 'warn');
         }
+    });
+
+    function buscarNoEditor(instancia, inputId, statusId) {
+        const campo = document.getElementById(inputId);
+        const status = document.getElementById(statusId);
+        const termo = campo.value.trim();
+        if (!termo) {
+            status.textContent = 'Digite um nome ou trecho.';
+            campo.focus();
+            return;
+        }
+
+        const texto = instancia.getValue();
+        const alvo = texto.toLocaleLowerCase();
+        const busca = termo.toLocaleLowerCase();
+        let total = 0;
+        let posicao = 0;
+        while ((posicao = alvo.indexOf(busca, posicao)) !== -1) {
+            total += 1;
+            posicao += Math.max(busca.length, 1);
+        }
+
+        if (!total) {
+            status.textContent = 'Nenhuma ocorrência.';
+            instancia.focus();
+            return;
+        }
+
+        const cursorAtual = instancia.indexFromPos(instancia.getCursor('to'));
+        let encontrado = alvo.indexOf(busca, cursorAtual);
+        if (encontrado < 0) { encontrado = alvo.indexOf(busca); }
+        const from = instancia.posFromIndex(encontrado);
+        const to = instancia.posFromIndex(encontrado + busca.length);
+        instancia.setSelection(from, to);
+        instancia.scrollIntoView({ from: from, to: to }, 80);
+        status.textContent = total + ' ocorrência(s) encontrada(s).';
+    }
+
+    function buscarXmlHash() {
+        buscarNoEditor(editor, 'buscaXml', 'buscaXmlStatus');
+    }
+
+    function buscarGlosa() {
+        buscarNoEditor(glosaEditor, 'buscaGlosa', 'buscaGlosaStatus');
+    }
+
+    ['buscaXml', 'buscaGlosa'].forEach(function (id) {
+        const campo = document.getElementById(id);
+        campo.addEventListener('keydown', function (evento) {
+            if (evento.key === 'Enter') {
+                evento.preventDefault();
+                if (id === 'buscaXml') { buscarXmlHash(); } else { buscarGlosa(); }
+            }
+        });
     });
 
     const ALGORITMOS = {
@@ -1204,9 +1407,55 @@
             glosaEditor.setValue(e.target.result);
             document.getElementById('glosaFilename').value = file.name;
             document.getElementById('glosaArquivo').textContent = 'Arquivo: ' + file.name;
+            document.getElementById('glosaAjuste').textContent = '';
             glosaEditor.focus();
         };
         reader.readAsText(file);
+    }
+
+    async function ajustarRecursoGlosa() {
+        const status = document.getElementById('glosaAjuste');
+        const xml = glosaEditor.getValue().trim();
+        if (!xml) {
+            status.textContent = 'Carregue ou cole um XML de recurso antes de ajustar.';
+            return;
+        }
+
+        status.textContent = 'Ajustando tags do recurso...';
+        try {
+            const resposta = await fetch('/ajustar-recurso-glosa', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ xml: xml })
+            });
+            const dados = await resposta.json();
+            if (!dados.sucesso) {
+                status.textContent = dados.mensagem || 'Não foi possível ajustar o recurso.';
+                return;
+            }
+
+            glosaEditor.setValue(dados.xml);
+            for (let i = 0; i < glosaEditor.lineCount(); i++) {
+                glosaEditor.removeLineClass(i, 'background', 'linha-alterada');
+            }
+            (dados.linhas_alteradas || []).forEach(function (numero) {
+                if (numero >= 1 && numero <= glosaEditor.lineCount()) {
+                    glosaEditor.addLineClass(numero - 1, 'background', 'linha-alterada');
+                }
+            });
+
+            const linhas = (dados.linhas_alteradas || []).join(', ');
+            status.textContent = dados.alteracoes && dados.alteracoes.length
+                ? dados.mensagem + ' Linhas alteradas: ' + linhas + '.'
+                : dados.mensagem;
+
+            if (dados.linhas_alteradas && dados.linhas_alteradas.length) {
+                glosaEditor.scrollIntoView({ line: dados.linhas_alteradas[0] - 1, ch: 0 }, 80);
+            }
+            glosaEditor.focus();
+        } catch (erro) {
+            status.textContent = 'Falha ao ajustar o recurso: ' + erro.message;
+        }
     }
 
     function carregarExemploGlosa() {
