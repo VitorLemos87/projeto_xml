@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor XML & Validador</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- CodeMirror & Material Darker Theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .main-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+        .nav-tabs {
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .nav-tabs .nav-link {
+            color: #64748b;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .nav-tabs .nav-link:hover {
+            color: #0f172a;
+        }
+        .nav-tabs .nav-link.active {
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+            background: transparent;
+            font-weight: 600;
+        }
+        .CodeMirror {
+            height: 520px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'Fira Code', Consolas, Monaco, monospace;
+            border: 1px solid #e2e8f0;
+        }
+        .card-minimal {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #ffffff;
+        }
+        .form-control, .form-select {
+            border-color: #cbd5e1;
+            font-size: 0.875rem;
+            border-radius: 6px;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        .btn-custom-primary {
+            background-color: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .btn-custom-primary:hover {
+            background-color: #1d4ed8;
+            color: #ffffff;
+        }
+        .btn-custom-dark {
+            background-color: #0f172a;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .btn-custom-dark:hover {
+            background-color: #1e293b;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body class="p-3 p-md-4">
+    <div class="container-fluid main-card p-4 mx-auto" style="max-width: 1350px;">
+        
+        <!-- Cabeçalho & Navegação -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="m-0 fw-semibold text-slate-800" style="letter-spacing: -0.5px;">Editor & Validador XML</h4>
+            <ul class="nav nav-tabs border-0" id="mainTab" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" id="editor-tab" data-bs-toggle="tab" data-bs-target="#editor-panel" type="button">
+                        XML & Hash
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="xsd-tab" data-bs-toggle="tab" data-bs-target="#xsd-panel" type="button">
+                        Schema XSD
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="tab-content" id="mainTabContent">
+            
+            <!-- ABA 1: Editor & Hash -->
+            <div class="tab-pane fade show active" id="editor-panel" role="tabpanel">
+                <div class="row g-4">
+                    <!-- Editor -->
+                    <div class="col-lg-8">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="btn btn-outline-secondary btn-sm px-3">
+                                📂 Carregar XML
+                                <input type="file" id="fileInput" accept=".xml" hidden onchange="carregarArquivo(event)">
+                            </label>
+                            <form action="/download" method="POST" class="d-flex gap-2">
+                                <input type="hidden" name="xml_download" id="xmlDownloadInput">
+                                <input type="text" name="filename" value="documento.xml" class="form-control form-control-sm bg-light" style="width: 220px;">
+                                <button type="submit" class="btn btn-custom-dark btn-sm px-3" onclick="prepararDownload()">💾 Baixar</button>
+                            </form>
+                        </div>
+                        <textarea id="xmlContent">{{ xml_content }}</textarea>
+                    </div>
+
+                    <!-- Painel Lateral Hash -->
+                    <div class="col-lg-4">
+                        <div class="card-minimal p-3">
+                            <h6 class="fw-semibold text-slate-700 mb-3">Opções de Validação</h6>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small mb-1">Algoritmo</label>
+                                <select id="algoritmo" class="form-select form-select-sm">
+                                    <option value="md5" selected>MD5 (Padrão TISS / ANS)</option>
+                                    <option value="sha256">SHA-256 (NFe / APIs)</option>
+                                    <option value="sha1">SHA-1</option>
+                                    <option value="sha512">SHA-512</option>
+                                </select>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input type="checkbox" class="form-check-input" id="usarC14N">
+                                <label class="form-check-label text-muted small" for="usarC14N">Canonicidade C14N</label>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small mb-1">Hash Esperado (Opcional)</label>
+                                <input type="text" id="hashEsperado" class="form-control form-control-sm font-monospace" placeholder="Cole para comparar...">
+                            </div>
+
+                            <button class="btn btn-custom-primary btn-sm w-100 py-2" onclick="validarEProcessar()">Calcular Hash</button>
+
+                            <div id="resultadoHash" class="mt-3 pt-3 border-top" style="display:none;">
+                                <div class="d-flex justify-content-between small text-muted mb-1">
+                                    <span>Sintaxe XML:</span>
+                                    <span id="xmlStatus"></span>
+                                </div>
+                                <div class="small text-muted mb-1">Hash Gerado:</div>
+                                <div id="hashCalculado" class="p-2 rounded font-monospace small mb-2" style="background-color: #1e293b; color: #38bdf8;"></div>
+                                <div id="statusHashBox" class="alert p-2 m-0 small" style="display:none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 2: Schema XSD -->
+            <div class="tab-pane fade" id="xsd-panel" role="tabpanel">
+                <div class="mx-auto" style="max-width: 800px;">
+                    <div class="card-minimal p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-semibold text-slate-700 m-0">Validar Estrutura contra Schema (XSD)</h6>
+                            <label class="btn btn-outline-secondary btn-sm">
+                                📂 Carregar XSD
+                                <input type="file" id="xsdFileInput" accept=".xsd" hidden onchange="carregarXSD(event)">
+                            </label>
+                        </div>
+                        <textarea id="xsdContent" class="form-control font-monospace mb-3" rows="8" placeholder="Cole o código do Schema <xs:schema> aqui..."></textarea>
+                        <button class="btn btn-custom-primary btn-sm w-100 py-2 mb-2" onclick="validarXSD()">Validar XML contra XSD</button>
+                        <div id="resultadoXSD" class="alert p-3 m-0 small" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+
+    <script>
+        const editor = CodeMirror.fromTextArea(document.getElementById('xmlContent'), {
+            mode: "xml",
+            theme: "material-darker",
+            lineNumbers: true,
+            lineWrapping: true
+        });
+
+        function carregarArquivo(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const filenameInput = document.querySelector('input[name="filename"]');
+            if (filenameInput) filenameInput.value = file.name;
+
+            const reader = new FileReader();
+            reader.onload = e => editor.setValue(e.target.result);
+            reader.readAsText(file);
+        }
+
+        function carregarXSD(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => document.getElementById('xsdContent').value = e.target.result;
+            reader.readAsText(file);
+        }
+
+        function prepararDownload() {
+            document.getElementById('xmlDownloadInput').value = editor.getValue();
+        }
+
+        async function validarEProcessar() {
+            const response = await fetch('/validar-hash', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    xml: editor.getValue(),
+                    hash_esperado: document.getElementById('hashEsperado').value,
+                    algoritmo: document.getElementById('algoritmo').value,
+                    usar_c14n: document.getElementById('usarC14N').checked
+                })
+            });
+
+            const data = await response.json();
+            document.getElementById('resultadoHash').style.display = 'block';
+            document.getElementById('xmlStatus').innerHTML = data.xml_valido ? 
+                '<span class="text-success fw-bold">OK</span>' : `<span class="text-danger fw-bold">${data.erro_xml}</span>`;
+            document.getElementById('hashCalculado').innerText = data.hash_calculado || 'Erro';
+
+            const statusHashBox = document.getElementById('statusHashBox');
+            if (data.hashes_coincidem !== null) {
+                statusHashBox.style.display = 'block';
+                statusHashBox.className = data.hashes_coincidem ? 'alert alert-success p-2' : 'alert alert-danger p-2';
+                statusHashBox.innerText = data.hashes_coincidem ? '✔ Hashes idênticos' : '✖ Hashes diferentes';
+            } else {
+                statusHashBox.style.display = 'none';
+            }
+        }
+
+        async function validarXSD() {
+            const xsd = document.getElementById('xsdContent').value;
+            if (!xsd.trim()) {
+                alert('Cole ou carregue um arquivo XSD primeiro.');
+                return;
+            }
+
+            const response = await fetch('/validar-schema', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ xml: editor.getValue(), xsd: xsd })
+            });
+
+            const data = await response.json();
+            const resultadoXSD = document.getElementById('resultadoXSD');
+            resultadoXSD.style.display = 'block';
+
+            if (data.valido) {
+                resultadoXSD.className = 'alert alert-success p-2';
+                resultadoXSD.innerHTML = '✔ XML válido segundo o XSD.';
+            } else {
+                resultadoXSD.className = 'alert alert-danger p-2';
+                let errosHTML = '<strong>✖ Erros de estrutura:</strong><ul class="mb-0 ps-3 mt-1">';
+                data.erros.forEach(e => errosHTML += `<li>${e}</li>`);
+                errosHTML += '</ul>';
+                resultadoXSD.innerHTML = errosHTML;
+            }
+        }
+    </script>
+</body>
+</html>
