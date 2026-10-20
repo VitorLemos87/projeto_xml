@@ -1,293 +1,1276 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor XML & Validador</title>
-    <!-- Google Fonts Inter -->
+    <title>Editor & Validador XML</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <!-- Bootstrap 5 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- CodeMirror & Material Darker Theme -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css">
     <style>
+        :root {
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --soft: #f8fafc;
+            --blue: #2563eb;
+            --blue-dark: #1d4ed8;
+            --teal: #0f766e;
+            --teal-soft: #ecfdf5;
+        }
+
+        * { box-sizing: border-box; }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #f8fafc;
-            color: #1e293b;
+            background: #f6f8fb;
+            color: var(--ink);
+            min-height: 100vh;
         }
-        .main-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+
+        .app-shell {
+            max-width: 1380px;
+            margin: 0 auto;
+            padding: 24px;
         }
-        .nav-tabs {
-            border-bottom: 1px solid #e2e8f0;
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 18px;
         }
-        .nav-tabs .nav-link {
-            color: #64748b;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.2s;
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            min-width: 0;
         }
-        .nav-tabs .nav-link:hover {
-            color: #0f172a;
+
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: var(--ink);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+            flex: 0 0 auto;
         }
-        .nav-tabs .nav-link.active {
-            color: #2563eb;
-            border-bottom: 2px solid #2563eb;
-            background: transparent;
+
+        .brand h1 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            margin: 0;
+        }
+
+        .brand p {
+            margin: 2px 0 0;
+            color: var(--muted);
+            font-size: 0.78rem;
+        }
+
+        .segmented {
+            display: inline-flex;
+            gap: 3px;
+            padding: 3px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: #fff;
+        }
+
+        .segmented .nav-link {
+            border: 0;
+            border-radius: 7px;
+            color: var(--muted);
+            font-size: 0.8rem;
             font-weight: 600;
+            padding: 7px 14px;
+            background: transparent;
         }
+
+        .segmented .nav-link:hover { color: var(--ink); }
+
+        .segmented .nav-link.active {
+            background: var(--ink);
+            color: #fff;
+        }
+
+        .content-card {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.035);
+        }
+
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 9px;
+        }
+
+        .editor-label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
         .CodeMirror {
-            height: 520px;
-            border-radius: 8px;
+            height: 535px;
+            border-radius: 9px;
             font-size: 13px;
             font-family: 'Fira Code', Consolas, Monaco, monospace;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #dfe7ef;
         }
-        .card-minimal {
-            border: 1px solid #e2e8f0;
+
+        .side-card {
+            border: 1px solid var(--line);
             border-radius: 10px;
-            background: #ffffff;
+            background: #fff;
+            padding: 16px;
         }
+
+        .side-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 0 0 14px;
+        }
+
+        .form-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 5px;
+        }
+
         .form-control, .form-select {
             border-color: #cbd5e1;
-            font-size: 0.875rem;
-            border-radius: 6px;
+            font-size: 0.84rem;
+            border-radius: 7px;
         }
+
         .form-control:focus, .form-select:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
         }
-        .btn-custom-primary {
-            background-color: #2563eb;
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
+
+        .form-control-sm, .form-select-sm { min-height: 34px; }
+
+        .btn {
+            border-radius: 7px;
+            font-size: 0.83rem;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: var(--blue);
+            border-color: var(--blue);
+        }
+
+        .btn-primary:hover {
+            background: var(--blue-dark);
+            border-color: var(--blue-dark);
+        }
+
+        .btn-outline-secondary {
+            color: #475569;
+            border-color: #cbd5e1;
+            background: #fff;
+        }
+
+        .btn-outline-secondary:hover {
+            background: var(--soft);
+            color: var(--ink);
+        }
+
+        .option-help {
+            margin-top: -2px;
+            margin-bottom: 13px;
+            padding: 10px 11px;
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+            background: #f8fbff;
+            color: #475569;
+            font-size: 0.76rem;
+            line-height: 1.5;
+        }
+
+        .option-help strong {
+            display: block;
+            color: #1e3a8a;
+            font-size: 0.78rem;
+            margin-bottom: 2px;
+        }
+
+        .c14n-help {
+            margin: -3px 0 13px;
+            padding: 9px 11px;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            color: #64748b;
+            font-size: 0.74rem;
+            line-height: 1.5;
+        }
+
+        .c14n-help strong {
+            display: block;
+            color: #334155;
+            font-size: 0.76rem;
+            margin-bottom: 2px;
+        }
+
+        .hash-output {
+            background: #0f172a;
+            color: #7dd3fc;
+            border-radius: 7px;
+            padding: 9px 10px;
+            font-family: 'Fira Code', Consolas, monospace;
+            font-size: 0.72rem;
+            word-break: break-all;
+        }
+
+        .result-box {
+            border-radius: 8px;
+            padding: 12px 13px;
+            font-size: 0.82rem;
+            line-height: 1.55;
+        }
+
+        .result-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        .result-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .result-warning {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+        }
+
+        .result-box ul {
+            margin: 6px 0 0;
+            padding-left: 18px;
+        }
+
+        .intro-card {
+            border: 1px solid #dbeafe;
+            border-radius: 11px;
+            background: linear-gradient(135deg, #f8fbff, #ffffff);
+            padding: 20px;
+        }
+
+        .intro-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            background: #e0ecff;
+            color: #1d4ed8;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 9px;
+        }
+
+        .intro-card h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 0 0 5px;
+            letter-spacing: -0.2px;
+        }
+
+        .intro-card p {
+            color: #475569;
+            font-size: 0.86rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .check-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 7px;
+            margin: 15px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .glosa-flow {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 13px;
+        }
+
+        .glosa-flow span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: #475569;
+            font-size: 0.74rem;
             font-weight: 500;
-            transition: background 0.2s;
+            padding: 4px 10px 4px 5px;
         }
-        .btn-custom-primary:hover {
-            background-color: #1d4ed8;
-            color: #ffffff;
+
+        .glosa-flow b {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #e0ecff;
+            color: #1d4ed8;
+            font-size: 0.68rem;
         }
-        .btn-custom-dark {
-            background-color: #0f172a;
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
+
+        .glosa-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 13px;
+            padding-top: 13px;
+            border-top: 1px solid var(--line);
+        }
+
+        .glosa-file {
+            color: var(--muted);
+            font-size: 0.74rem;
+        }
+
+        .glosa-editor-card {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 14px;
+        }
+
+        .glosa-editor-card .CodeMirror {
+            height: 340px;
+            font-size: 12.5px;
+        }
+
+        .glosa-editor-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-bottom: 8px;
+        }
+
+        .glosa-footer {
+            display: flex;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .glosa-name {
+            flex: 1 1 240px;
+            min-width: 210px;
+        }
+
+        .glosa-name .form-label {
+            margin-bottom: 3px;
+        }
+
+        .glosa-name .form-control {
+            height: 34px;
+        }
+
+        .xsd-help {
+            margin: 0 0 13px;
+            padding: 11px 13px;
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+            background: #f8fbff;
+            color: #475569;
+            font-size: 0.77rem;
+            line-height: 1.55;
+        }
+
+        .xsd-help > strong {
+            display: block;
+            color: #1e3a8a;
+            font-size: 0.78rem;
+            margin-bottom: 3px;
+        }
+
+        .xsd-help p {
+            margin: 0 0 5px;
+        }
+
+        .xsd-help p:last-child {
+            margin-bottom: 0;
+        }
+
+        .tiss-auto {
+            margin-top: 15px;
+            padding-top: 14px;
+            border-top: 1px solid var(--line);
+        }
+
+        .tiss-auto-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 5px;
+        }
+
+        .tiss-version {
+            color: var(--muted);
+            font-size: 0.7rem;
             font-weight: 500;
         }
-        .btn-custom-dark:hover {
-            background-color: #1e293b;
-            color: #ffffff;
+
+        .tiss-auto-help {
+            color: var(--muted);
+            font-size: 0.73rem;
+            line-height: 1.45;
+            margin-bottom: 9px;
+        }
+
+        .tiss-result {
+            margin-top: 9px;
+            padding: 10px 11px;
+            border-radius: 8px;
+            font-size: 0.76rem;
+            line-height: 1.5;
+        }
+
+        .tiss-result strong {
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .tiss-result ul {
+            margin: 6px 0 0;
+            padding-left: 17px;
+            max-height: 170px;
+            overflow: auto;
+        }
+
+        .tiss-result li {
+            margin-bottom: 3px;
+        }
+
+        .download-status {
+            margin-top: 8px;
+            padding: 7px 9px;
+            border-radius: 7px;
+            font-size: 0.73rem;
+            line-height: 1.4;
+        }
+
+        .download-status.ok {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        .download-status.warn {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+        }
+
+        .xml-preview {
+            margin-top: 9px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #f8fafc;
+            padding: 7px 9px;
+        }
+
+        .xml-preview summary {
+            cursor: pointer;
+            color: #475569;
+            font-size: 0.73rem;
+            font-weight: 600;
+        }
+
+        .xml-preview pre {
+            margin: 7px 0 0;
+            max-height: 180px;
+            overflow: auto;
+            color: #334155;
+            font-family: 'Fira Code', Consolas, monospace;
+            font-size: 0.68rem;
+            line-height: 1.45;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .tiss-result.ok {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        .tiss-result.warn {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+        }
+
+        .tiss-result.err {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .check-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 7px;
+            color: #475569;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            padding: 8px 9px;
+        }
+
+        .check-list li::before {
+            content: '✓';
+            color: var(--teal);
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .muted-small {
+            color: var(--muted);
+            font-size: 0.77rem;
+            line-height: 1.5;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--line);
+            margin: 15px 0;
+        }
+
+        @media (max-width: 991px) {
+            .app-shell { padding: 14px; }
+            .content-card { padding: 17px; }
+            .topbar { align-items: flex-start; flex-direction: column; }
+            .segmented { width: 100%; }
+            .segmented .nav-item { flex: 1; }
+            .segmented .nav-link { width: 100%; padding: 7px 8px; }
+            .CodeMirror { height: 420px; }
+        }
+
+        @media (max-width: 575px) {
+            .check-list { grid-template-columns: 1fr; }
+            .editor-toolbar form { width: 100%; }
+            .editor-toolbar form input[name="filename"] { flex: 1; width: auto !important; }
         }
     </style>
 </head>
-<body class="p-3 p-md-4">
-    <div class="container-fluid main-card p-4 mx-auto" style="max-width: 1350px;">
-        
-        <!-- Cabeçalho & Navegação -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="m-0 fw-semibold text-slate-800" style="letter-spacing: -0.5px;">Editor & Validador XML</h4>
-            <ul class="nav nav-tabs border-0" id="mainTab" role="tablist">
-                <li class="nav-item">
-                    <button class="nav-link active" id="editor-tab" data-bs-toggle="tab" data-bs-target="#editor-panel" type="button">
-                        XML & Hash
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button class="nav-link" id="xsd-tab" data-bs-toggle="tab" data-bs-target="#xsd-panel" type="button">
-                        Schema XSD
-                    </button>
-                </li>
-            </ul>
+<body>
+<div class="app-shell">
+    <div class="topbar">
+        <div class="brand">
+            <span class="brand-mark">&lt;/&gt;</span>
+            <div>
+                <h1>Editor &amp; Validador XML</h1>
+                <p>Hash, schema XSD e recurso de glosa TISS</p>
+            </div>
         </div>
 
+        <ul class="nav nav-pills segmented" id="mainTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="editor-tab" data-bs-toggle="tab"
+                        data-bs-target="#editor-panel" type="button" role="tab">
+                    XML &amp; Hash
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="glosa-tab" data-bs-toggle="tab"
+                        data-bs-target="#glosa-panel" type="button" role="tab">
+                    Recurso de Glosa
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="xsd-tab" data-bs-toggle="tab"
+                        data-bs-target="#xsd-panel" type="button" role="tab">
+                    Schema XSD
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <div class="content-card">
         <div class="tab-content" id="mainTabContent">
-            
-            <!-- ABA 1: Editor & Hash -->
             <div class="tab-pane fade show active" id="editor-panel" role="tabpanel">
                 <div class="row g-4">
-                    <!-- Editor -->
                     <div class="col-lg-8">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="btn btn-outline-secondary btn-sm px-3">
-                                📂 Carregar XML
-                                <input type="file" id="fileInput" accept=".xml" hidden onchange="carregarArquivo(event)">
-                            </label>
-                            <form action="/download" method="POST" class="d-flex gap-2">
-                                <input type="hidden" name="xml_download" id="xmlDownloadInput">
-                                <input type="text" name="filename" value="documento.xml" class="form-control form-control-sm bg-light" style="width: 220px;">
-                                <button type="submit" class="btn btn-custom-dark btn-sm px-3" onclick="prepararDownload()">💾 Baixar</button>
-                            </form>
+                        <div class="editor-toolbar">
+                            <span class="editor-label">Documento XML</span>
                         </div>
                         <textarea id="xmlContent">{{ xml_content }}</textarea>
                     </div>
 
-                    <!-- Painel Lateral Hash -->
                     <div class="col-lg-4">
-                        <div class="card-minimal p-3">
-                            <h6 class="fw-semibold text-slate-700 mb-3">Opções de Validação</h6>
+                        <div class="side-card">
+                            <h2 class="side-title">Opções de validação</h2>
 
                             <div class="mb-3">
-                                <label class="form-label text-muted small mb-1">Algoritmo</label>
+                                <label class="form-label" for="algoritmo">Algoritmo de hash</label>
                                 <select id="algoritmo" class="form-select form-select-sm">
-                                    <option value="md5" selected>MD5 (Padrão TISS / ANS)</option>
-                                    <option value="sha256">SHA-256 (NFe / APIs)</option>
-                                    <option value="sha1">SHA-1</option>
-                                    <option value="sha512">SHA-512</option>
+                                    <option value="md5" selected>MD5 — padrão TISS / ANS</option>
+                                    <option value="sha1">SHA-1 — compatibilidade legada</option>
+                                    <option value="sha256">SHA-256 — NFe / APIs</option>
+                                    <option value="sha384">SHA-384 — SHA-2 estendido</option>
+                                    <option value="sha512">SHA-512 — alta segurança</option>
+                                    <option value="sha3_256">SHA3-256 — SHA-3</option>
+                                    <option value="blake2b">BLAKE2b — rápido e seguro</option>
                                 </select>
+                                <div id="algorithmHelp" class="option-help" aria-live="polite"></div>
                             </div>
 
-                            <div class="form-check mb-3">
-                                <input type="checkbox" class="form-check-input" id="usarC14N">
-                                <label class="form-check-label text-muted small" for="usarC14N">Canonicidade C14N</label>
+                            <form id="formDownloadPrincipal" action="/download" method="POST">
+                                <input type="hidden" name="xml_download" id="xmlDownloadInput">
+                                <div class="d-flex gap-2 mb-2">
+                                    <label class="btn btn-outline-secondary btn-sm px-2 mb-0">
+                                        Carregar
+                                        <input type="file" id="fileInput" accept=".xml" hidden
+                                               onchange="carregarArquivo(event)">
+                                    </label>
+                                    <button class="btn btn-primary flex-grow-1 py-2" type="button"
+                                            id="btnValidarXmlAns" onclick="validarXmlAns()">
+                                        Validar
+                                    </button>
+                                    <button class="btn btn-outline-secondary px-2 py-2" type="button"
+                                            onclick="baixarValidado()">
+                                        Baixar
+                                    </button>
+                                </div>
+                                <label class="form-label" for="filenamePrincipal">Nome do arquivo</label>
+                                <input type="text" name="filename" id="filenamePrincipal"
+                                       class="form-control form-control-sm"
+                                       value="documento.xml" autocomplete="off">
+                            </form>
+
+                            <div class="mb-3 mt-3">
+                                <label class="form-label" for="hashEsperado">Hash esperado (opcional)</label>
+                                <input type="text" id="hashEsperado" class="form-control form-control-sm font-monospace"
+                                       placeholder="Cole o hash para comparar">
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label text-muted small mb-1">Hash Esperado (Opcional)</label>
-                                <input type="text" id="hashEsperado" class="form-control form-control-sm font-monospace" placeholder="Cole para comparar...">
+                            <div class="tiss-auto-help mb-2">
+                                O botão Validar calcula o hash, grava no epílogo, identifica a versão
+                                e valida contra o XSD oficial.
                             </div>
-
-                            <button class="btn btn-custom-primary btn-sm w-100 py-2" onclick="validarEProcessar()">Calcular Hash</button>
+                            <div id="statusDownload" class="download-status" hidden></div>
 
                             <div id="resultadoHash" class="mt-3 pt-3 border-top" style="display:none;">
-                                <div class="d-flex justify-content-between small text-muted mb-1">
-                                    <span>Sintaxe XML:</span>
+                                <div class="d-flex justify-content-between small text-muted mb-2">
+                                    <span>Sintaxe XML</span>
                                     <span id="xmlStatus"></span>
                                 </div>
-                                <div class="small text-muted mb-1">Hash Gerado:</div>
-                                <div id="hashCalculado" class="p-2 rounded font-monospace small mb-2" style="background-color: #1e293b; color: #38bdf8;"></div>
-                                <div id="statusHashBox" class="alert p-2 m-0 small" style="display:none;"></div>
+                                <div class="small text-muted mb-1">Hash gerado</div>
+                                <div id="hashCalculado" class="hash-output mb-2"></div>
+                                <div id="statusHashBox" class="result-box" style="display:none;"></div>
+                            </div>
+
+                            <div class="tiss-auto">
+                                <div class="tiss-auto-title">
+                                    <span>Validação TISS automática</span>
+                                    <span class="tiss-version">XSD {{ versoes_tiss|join(', ') or 'não instalado' }}</span>
+                                </div>
+                                <p class="tiss-auto-help">
+                                    A validação acima identifica a versão pelo campo <code>Padrao</code>
+                                    do XML e valida contra o XSD oficial embarcado.
+                                </p>
+                                <div id="resultadoTiss" class="tiss-result" hidden></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ABA 2: Schema XSD -->
             <div class="tab-pane fade" id="xsd-panel" role="tabpanel">
-                <div class="mx-auto" style="max-width: 800px;">
-                    <div class="card-minimal p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="fw-semibold text-slate-700 m-0">Validar Estrutura contra Schema (XSD)</h6>
-                            <label class="btn btn-outline-secondary btn-sm">
-                                📂 Carregar XSD
+                <div class="mx-auto" style="max-width: 860px;">
+                    <div class="side-card">
+                        <div class="d-flex justify-content-between align-items-center mb-3 gap-2">
+                            <div>
+                                <h2 class="h6 fw-semibold mb-1">Validação contra Schema XSD</h2>
+                                <p class="muted-small mb-0">Confere se o XML obedece à estrutura definida no schema.</p>
+                            </div>
+                            <label class="btn btn-outline-secondary btn-sm mb-0">
+                                Carregar XSD
                                 <input type="file" id="xsdFileInput" accept=".xsd" hidden onchange="carregarXSD(event)">
                             </label>
                         </div>
-                        <textarea id="xsdContent" class="form-control font-monospace mb-3" rows="8" placeholder="Cole o código do Schema <xs:schema> aqui..."></textarea>
-                        <button class="btn btn-custom-primary btn-sm w-100 py-2 mb-2" onclick="validarXSD()">Validar XML contra XSD</button>
-                        <div id="resultadoXSD" class="alert p-3 m-0 small" style="display:none;"></div>
+                        <textarea id="xsdContent" class="form-control font-monospace mb-3" rows="9"
+                                  placeholder="Cole aqui o Schema XSD (<xs:schema>...)"></textarea>
+                        <div class="xsd-help">
+                            <strong>O que é o XSD?</strong>
+                            <p>
+                                O XSD é o schema que descreve a estrutura permitida do XML: elementos,
+                                ordem, campos obrigatórios e tipos de dados.
+                            </p>
+                            <p>
+                                A validação usa o XML carregado na aba <strong>XML &amp; Hash</strong>.
+                                Carregue aqui o XSD correspondente à mesma versão do XML.
+                            </p>
+                        </div>
+                        <button class="btn btn-primary w-100 py-2 mb-2" type="button" onclick="validarXSD()">
+                            Validar XML contra XSD
+                        </button>
+                        <div id="resultadoXSD" class="result-box" style="display:none;"></div>
                     </div>
                 </div>
             </div>
 
+            <div class="tab-pane fade" id="glosa-panel" role="tabpanel">
+                <div class="mx-auto" style="max-width: 980px;">
+                    <div class="glosa-editor-card">
+                        <div class="glosa-editor-toolbar">
+                            <span class="editor-label">XML do recurso</span>
+                            <div class="d-flex align-items-center flex-wrap gap-2">
+                                <label class="btn btn-outline-secondary btn-sm mb-0">
+                                    Selecionar XML
+                                    <input type="file" id="glosaFileInput" accept=".xml" hidden
+                                           onchange="carregarGlosaArquivo(event)">
+                                </label>
+                                <button class="btn btn-outline-secondary btn-sm" type="button"
+                                        onclick="carregarExemploGlosa()">Carregar exemplo</button>
+                                <span id="glosaArquivo" class="glosa-file">Nenhum arquivo carregado.</span>
+                            </div>
+                        </div>
+                        <textarea id="glosaXmlContent"></textarea>
+
+                        <div class="glosa-footer">
+                            <div class="glosa-name">
+                                <label class="form-label" for="glosaFilename">Nome do arquivo</label>
+                                <input type="text" id="glosaFilename" class="form-control form-control-sm"
+                                       value="recurso_glosa.xml" autocomplete="off">
+                            </div>
+                            <button class="btn btn-primary px-4 py-2" type="button" onclick="validarGlosa()">
+                                Validar recurso de glosa
+                            </button>
+                            <form action="/download" method="POST" class="d-flex" style="margin:0;">
+                                <input type="hidden" name="xml_download" id="glosaDownloadInput">
+                                <input type="hidden" name="filename" id="glosaFilenameDownload">
+                                <button type="submit" class="btn btn-outline-secondary px-4 py-2"
+                                        onclick="prepararDownloadGlosa()">Baixar</button>
+                            </form>
+                        </div>
+                        <div id="resultadoGlosa" class="result-box mt-3" style="display:none;"></div>
+                    </div>
+
+                    <div class="intro-card mt-3">
+                        <span class="intro-kicker">TISS · Recurso de glosa</span>
+                        <h2>Validar XML de recurso de glosa</h2>
+                        <p>
+                            O editor acima aceita o XML digitado, colado ou carregado de um arquivo.
+                            Depois de revisar, clique em <strong>Validar recurso de glosa</strong>.
+                            A validação confere a estrutura da mensagem <code>mensagemTISS</code>.
+                        </p>
+                        <div class="glosa-flow">
+                            <span><b>1</b> Carregue o XML</span>
+                            <span><b>2</b> Revise o conteúdo</span>
+                            <span><b>3</b> Valide a estrutura</span>
+                        </div>
+                        <ul class="check-list">
+                            <li>Elemento raiz <code>mensagemTISS</code></li>
+                            <li>Tipo de transação <code>RECURSO_GLOSA</code></li>
+                            <li>Cabeçalho e dados da transação</li>
+                            <li>Bloco <code>guiaRecursoGlosa</code></li>
+                            <li>Campos obrigatórios da guia</li>
+                            <li>Opção de recurso, itens ou guia completa</li>
+                            <li>Valores e datas em formato válido</li>
+                            <li>Aviso quando o hash do epílogo estiver vazio</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- CodeMirror JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
 
-    <script>
-        const editor = CodeMirror.fromTextArea(document.getElementById('xmlContent'), {
-            mode: "xml",
-            theme: "material-darker",
-            lineNumbers: true,
-            lineWrapping: true
+<script>
+    const editor = CodeMirror.fromTextArea(document.getElementById('xmlContent'), {
+        mode: 'xml',
+        theme: 'material-darker',
+        lineNumbers: true,
+        lineWrapping: true
+    });
+
+    const glosaEditor = CodeMirror.fromTextArea(document.getElementById('glosaXmlContent'), {
+        mode: 'xml',
+        theme: 'material-darker',
+        lineNumbers: true,
+        lineWrapping: true
+    });
+
+    let validadoParaDownload = false;
+
+    document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function (aba) {
+        aba.addEventListener('shown.bs.tab', function () {
+            editor.refresh();
+            glosaEditor.refresh();
         });
+    });
 
-        function carregarArquivo(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const filenameInput = document.querySelector('input[name="filename"]');
-            if (filenameInput) filenameInput.value = file.name;
-
-            const reader = new FileReader();
-            reader.onload = e => editor.setValue(e.target.result);
-            reader.readAsText(file);
+    editor.on('change', function () {
+        if (validadoParaDownload) {
+            validadoParaDownload = false;
+            mostrarStatusDownload('O XML foi alterado. Valide novamente antes de baixar.', 'warn');
         }
+    });
 
-        function carregarXSD(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = e => document.getElementById('xsdContent').value = e.target.result;
-            reader.readAsText(file);
+    const ALGORITMOS = {
+        md5: {
+            titulo: 'MD5 — padrão TISS / ANS',
+            descricao: 'Algoritmo de 128 bits (32 caracteres) usado historicamente na conferência de arquivos TISS. Não é indicado para segurança de senhas.'
+        },
+        sha1: {
+            titulo: 'SHA-1 — compatibilidade legada',
+            descricao: 'Gera 160 bits (40 caracteres). Use somente para compatibilidade com sistemas antigos; não é mais considerado seguro.'
+        },
+        sha256: {
+            titulo: 'SHA-256 — NFe / APIs',
+            descricao: 'Algoritmo SHA-2 de 256 bits (64 caracteres), comum em NFe, APIs e assinaturas digitais modernas.'
+        },
+        sha384: {
+            titulo: 'SHA-384 — SHA-2 estendido',
+            descricao: 'Variante do SHA-2 com 384 bits (96 caracteres), indicada quando o receptor exige maior tamanho de hash.'
+        },
+        sha512: {
+            titulo: 'SHA-512 — alta segurança',
+            descricao: 'SHA-2 de 512 bits (128 caracteres), usado quando é necessária uma saída de hash mais longa.'
+        },
+        sha3_256: {
+            titulo: 'SHA3-256 — SHA-3',
+            descricao: 'Algoritmo da família SHA-3 com 256 bits (64 caracteres), alternativa moderna ao SHA-2.'
+        },
+        blake2b: {
+            titulo: 'BLAKE2b — rápido e seguro',
+            descricao: 'Hash moderno e rápido, com saída padrão de 128 caracteres. Útil para conferência de integridade de arquivos grandes.'
         }
+    };
 
-        function prepararDownload() {
-            document.getElementById('xmlDownloadInput').value = editor.getValue();
+    function escaparHtml(valor) {
+        return String(valor ?? '')
+            .replaceAll('&', '&amp;').replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;').replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    function atualizarAjudaAlgoritmo() {
+        const select = document.getElementById('algoritmo');
+        const ajuda = document.getElementById('algorithmHelp');
+        const info = ALGORITMOS[select.value];
+        if (!info) { ajuda.innerHTML = ''; return; }
+        ajuda.innerHTML = '<strong>' + escaparHtml(info.titulo) + '</strong>' + escaparHtml(info.descricao);
+    }
+
+    document.getElementById('algoritmo').addEventListener('change', atualizarAjudaAlgoritmo);
+    atualizarAjudaAlgoritmo();
+
+    function carregarArquivo(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const filenameInput = document.querySelector('input[name="filename"]');
+        if (filenameInput) filenameInput.value = file.name;
+        const reader = new FileReader();
+        reader.onload = e => {
+            editor.setValue(e.target.result);
+            setTimeout(validarXmlAns, 80);
+        };
+        reader.readAsText(file);
+    }
+
+    function carregarXSD(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => document.getElementById('xsdContent').value = e.target.result;
+        reader.readAsText(file);
+    }
+
+    function prepararDownload() {
+        document.getElementById('xmlDownloadInput').value = editor.getValue();
+    }
+
+    function mostrarStatusDownload(texto, tipo) {
+        const status = document.getElementById('statusDownload');
+        status.hidden = false;
+        status.className = 'download-status ' + (tipo || '');
+        status.textContent = texto;
+    }
+
+    function baixarValidado() {
+        if (!validadoParaDownload) {
+            mostrarStatusDownload('Valide o XML antes de baixar o arquivo validado.', 'warn');
+            return;
         }
+        prepararDownload();
+        document.getElementById('formDownloadPrincipal').requestSubmit();
+    }
 
-        async function validarEProcessar() {
-            const response = await fetch('/validar-hash', {
+    async function validarXmlAns() {
+        const botao = document.getElementById('btnValidarXmlAns');
+        botao.disabled = true;
+        validadoParaDownload = false;
+        mostrarStatusDownload('Calculando hash, atualizando o epílogo e validando...', 'warn');
+
+        try {
+            const respostaHash = await fetch('/atualizar-hash', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     xml: editor.getValue(),
-                    hash_esperado: document.getElementById('hashEsperado').value,
-                    algoritmo: document.getElementById('algoritmo').value,
-                    usar_c14n: document.getElementById('usarC14N').checked
+                    algoritmo: document.getElementById('algoritmo').value
                 })
             });
-
-            const data = await response.json();
-            document.getElementById('resultadoHash').style.display = 'block';
-            document.getElementById('xmlStatus').innerHTML = data.xml_valido ? 
-                '<span class="text-success fw-bold">OK</span>' : `<span class="text-danger fw-bold">${data.erro_xml}</span>`;
-            document.getElementById('hashCalculado').innerText = data.hash_calculado || 'Erro';
-
-            const statusHashBox = document.getElementById('statusHashBox');
-            if (data.hashes_coincidem !== null) {
-                statusHashBox.style.display = 'block';
-                statusHashBox.className = data.hashes_coincidem ? 'alert alert-success p-2' : 'alert alert-danger p-2';
-                statusHashBox.innerText = data.hashes_coincidem ? '✔ Hashes idênticos' : '✖ Hashes diferentes';
-            } else {
-                statusHashBox.style.display = 'none';
-            }
-        }
-
-        async function validarXSD() {
-            const xsd = document.getElementById('xsdContent').value;
-            if (!xsd.trim()) {
-                alert('Cole ou carregue um arquivo XSD primeiro.');
+            const dadosHash = await respostaHash.json();
+            if (!dadosHash.sucesso) {
+                mostrarStatusDownload(dadosHash.mensagem || 'Falha ao atualizar o hash.', 'warn');
                 return;
             }
 
-            const response = await fetch('/validar-schema', {
+            editor.setValue(dadosHash.xml);
+            document.getElementById('resultadoHash').style.display = 'block';
+            document.getElementById('xmlStatus').innerHTML =
+                '<span class="text-success fw-semibold">Hash atualizado no XML</span>';
+            document.getElementById('hashCalculado').textContent = dadosHash.hash;
+
+            const esperado = document.getElementById('hashEsperado').value.trim();
+            const statusHash = document.getElementById('statusHashBox');
+            if (esperado) {
+                const iguais = esperado.toLowerCase() === dadosHash.hash.toLowerCase();
+                statusHash.style.display = 'block';
+                statusHash.className = 'result-box ' + (iguais ? 'result-success' : 'result-error');
+                statusHash.textContent = iguais ? 'Hashes idênticos.' : 'Hashes diferentes.';
+            } else {
+                statusHash.style.display = 'none';
+            }
+
+            const valido = await validarTiss();
+            if (valido) {
+                prepararDownload();
+                validadoParaDownload = true;
+                mostrarStatusDownload(
+                    'XML validado e hash atualizado. O arquivo está pronto para download com o nome ' +
+                    document.getElementById('formDownloadPrincipal').elements.filename.value + '.',
+                    'ok'
+                );
+            } else {
+                mostrarStatusDownload('O XML não passou na validação. Corrija os erros antes de baixar.', 'warn');
+            }
+        } catch (erro) {
+            mostrarStatusDownload('Falha ao validar: ' + erro.message, 'warn');
+        } finally {
+            botao.disabled = false;
+        }
+    }
+
+    async function verificarVersao() {
+        const box = document.getElementById('resultadoTiss');
+        const xml = editor.getValue().trim();
+        if (!xml) {
+            box.hidden = false;
+            box.className = 'tiss-result warn';
+            box.innerHTML = '<strong>Nenhum XML carregado.</strong>';
+            return;
+        }
+
+        try {
+            const response = await fetch('/validar-tiss', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ xml: editor.getValue(), xsd: xsd })
+                body: JSON.stringify({ xml: xml, somente_versao: true })
             });
-
             const data = await response.json();
-            const resultadoXSD = document.getElementById('resultadoXSD');
-            resultadoXSD.style.display = 'block';
+            box.hidden = false;
+            if (!data.detectada) {
+                box.className = 'tiss-result warn';
+                box.innerHTML = '<strong>Versão não identificada.</strong>' +
+                    escaparHtml(data.mensagem || 'Confira o campo Padrao do cabeçalho.');
+                return;
+            }
+            if (data.suportada) {
+                box.className = 'tiss-result ok';
+                box.innerHTML = '<strong>Versão detectada: ' + escaparHtml(data.versao) +
+                    '.</strong>XSD oficial disponível para validação.';
+            } else {
+                box.className = 'tiss-result warn';
+                box.innerHTML = '<strong>Versão detectada: ' + escaparHtml(data.versao) +
+                    '.</strong>Esta versão não possui XSD embarcado.';
+            }
+        } catch (erro) {
+            box.hidden = false;
+            box.className = 'tiss-result err';
+            box.innerHTML = '<strong>Falha ao consultar a versão.</strong>' + escaparHtml(erro.message);
+        }
+    }
+
+    function prepararDownloadGlosa() {
+        document.getElementById('glosaDownloadInput').value = glosaEditor.getValue();
+        const nome = document.getElementById('glosaFilename').value.trim() || 'recurso_glosa.xml';
+        document.getElementById('glosaFilenameDownload').value = nome;
+    }
+
+    async function validarTiss() {
+        const box = document.getElementById('resultadoTiss');
+        const xml = editor.getValue().trim();
+        if (!xml) {
+            box.hidden = false;
+            box.className = 'tiss-result warn';
+            box.innerHTML = '<strong>Nenhum XML carregado.</strong>Carregue ou cole um XML TISS para validar.';
+            return false;
+        }
+
+        box.hidden = false;
+        box.className = 'tiss-result warn';
+        box.textContent = 'Identificando versão TISS e validando...';
+
+        try {
+            const response = await fetch('/validar-tiss', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ xml: xml })
+            });
+            const data = await response.json();
+
+            if (!data.sucesso) {
+                box.className = 'tiss-result err';
+                box.innerHTML = '<strong>Não foi possível validar.</strong>' + escaparHtml(data.mensagem || '');
+                return false;
+            }
+
+            if (!data.detectada) {
+                box.className = 'tiss-result warn';
+                box.innerHTML = '<strong>Versão TISS não identificada.</strong>' + escaparHtml(data.mensagem || '');
+                return false;
+            }
+
+            if (!data.suportada) {
+                box.className = 'tiss-result warn';
+                box.innerHTML = '<strong>Versão TISS ' + escaparHtml(data.versao) + ' detectada.</strong>' +
+                    escaparHtml(data.mensagem || '') +
+                    '<br><small>Versões com XSD embarcado: ' +
+                    escaparHtml((data.versoes_disponiveis || []).join(', ') || 'nenhuma') + '</small>';
+                return false;
+            }
 
             if (data.valido) {
-                resultadoXSD.className = 'alert alert-success p-2';
-                resultadoXSD.innerHTML = '✔ XML válido segundo o XSD.';
-            } else {
-                resultadoXSD.className = 'alert alert-danger p-2';
-                let errosHTML = '<strong>✖ Erros de estrutura:</strong><ul class="mb-0 ps-3 mt-1">';
-                data.erros.forEach(e => errosHTML += `<li>${e}</li>`);
-                errosHTML += '</ul>';
-                resultadoXSD.innerHTML = errosHTML;
+                box.className = 'tiss-result ok';
+                box.innerHTML = '<strong>XML válido.</strong>Versão TISS ' +
+                    escaparHtml(data.versao) + ' identificada e validada contra o XSD oficial.';
+                return true;
             }
+
+            box.className = 'tiss-result err';
+            let html = '<strong>Versão ' + escaparHtml(data.versao) +
+                ' identificada, mas o XML não atende ao XSD.</strong>';
+            if (data.erros && data.erros.length) {
+                html += '<ul>';
+                data.erros.forEach(function (erro) {
+                    const local = erro.linha ? 'Linha ' + erro.linha + ': ' : '';
+                    html += '<li>' + escaparHtml(local + erro.mensagem) + '</li>';
+                });
+                html += '</ul>';
+            } else {
+                html += escaparHtml(data.mensagem || '');
+            }
+            box.innerHTML = html;
+            return false;
+        } catch (erro) {
+            box.className = 'tiss-result err';
+            box.innerHTML = '<strong>Falha na validação.</strong>' + escaparHtml(erro.message);
+            return false;
         }
-    </script>
+    }
+
+    async function validarXSD() {
+        const xsd = document.getElementById('xsdContent').value;
+        if (!xsd.trim()) {
+            alert('Cole ou carregue um arquivo XSD primeiro.');
+            return;
+        }
+        const response = await fetch('/validar-schema', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ xml: editor.getValue(), xsd: xsd })
+        });
+        const data = await response.json();
+        const resultado = document.getElementById('resultadoXSD');
+        resultado.style.display = 'block';
+
+        if (data.valido) {
+            resultado.className = 'result-box result-success';
+            resultado.innerHTML = 'XML válido segundo o XSD.';
+        } else {
+            resultado.className = 'result-box result-error';
+            let html = '<strong>Erros de estrutura:</strong><ul>';
+            (data.erros || []).forEach(function (erro) { html += '<li>' + escaparHtml(erro) + '</li>'; });
+            resultado.innerHTML = html + '</ul>';
+        }
+    }
+
+    const EXEMPLO_GLOSA = `<?xml version="1.0" encoding="UTF-8"?>
+<mensagemTISS xmlns="http://www.ans.gov.br/padroes/tiss/schemas">
+  <cabecalho>
+    <identificacaoTransacao>
+      <tipoTransacao>RECURSO_GLOSA</tipoTransacao>
+      <sequencialTransacao>000000000001</sequencialTransacao>
+      <dataRegistroTransacao>2026-10-19</dataRegistroTransacao>
+    </identificacaoTransacao>
+    <Padrao>4.03.00</Padrao>
+  </cabecalho>
+  <prestadorParaOperadora>
+    <recursoGlosa>
+      <guiaRecursoGlosa>
+        <registroANS>123456</registroANS>
+        <numeroGuiaRecGlosaPrestador>RG-0001</numeroGuiaRecGlosaPrestador>
+        <nomeOperadora>Operadora Exemplo</nomeOperadora>
+        <objetoRecurso>2</objetoRecurso>
+        <dadosContratado>
+          <cnpjContratado>11222333000144</cnpjContratado>
+        </dadosContratado>
+        <opcaoRecurso>
+          <recursoGuia>
+            <opcaoRecursoGuia>
+              <recursoGuiaCompleta>
+                <codGlosaGuia>1203</codGlosaGuia>
+                <justificativaGuia>Reconsiderar a glosa do atendimento.</justificativaGuia>
+              </recursoGuiaCompleta>
+            </opcaoRecursoGuia>
+          </recursoGuia>
+        </opcaoRecurso>
+        <valorTotalRecursado>10.00</valorTotalRecursado>
+        <dataRecurso>2026-10-19</dataRecurso>
+      </guiaRecursoGlosa>
+    </recursoGlosa>
+  </prestadorParaOperadora>
+  <epilogo><hash>abc123</hash></epilogo>
+</mensagemTISS>`;
+
+    function carregarGlosaArquivo(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            glosaEditor.setValue(e.target.result);
+            document.getElementById('glosaFilename').value = file.name;
+            document.getElementById('glosaArquivo').textContent = 'Arquivo: ' + file.name;
+            glosaEditor.focus();
+        };
+        reader.readAsText(file);
+    }
+
+    function carregarExemploGlosa() {
+        glosaEditor.setValue(EXEMPLO_GLOSA);
+        const nome = document.getElementById('glosaFilename');
+        if (!nome.value || nome.value === 'recurso_glosa.xml') {
+            nome.value = 'recurso_glosa_exemplo.xml';
+        }
+        document.getElementById('glosaArquivo').textContent = 'Exemplo de recurso carregado.';
+        glosaEditor.focus();
+    }
+
+    async function validarGlosa() {
+        const resultado = document.getElementById('resultadoGlosa');
+        if (!glosaEditor.getValue().trim()) {
+            resultado.style.display = 'block';
+            resultado.className = 'result-box result-warning';
+            resultado.textContent = 'Nenhum XML carregado. Use “Selecionar XML” ou cole o conteúdo no editor acima.';
+            return;
+        }
+        resultado.style.display = 'block';
+        resultado.className = 'result-box';
+        resultado.textContent = 'Validando...';
+
+        try {
+            const response = await fetch('/validar-glosa', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ xml: glosaEditor.getValue() })
+            });
+            const data = await response.json();
+
+            if (!data.sucesso) {
+                resultado.className = 'result-box result-error';
+                resultado.innerHTML = (data.erros || ['Não foi possível validar o XML.'])
+                    .map(escaparHtml).join('<br>');
+                return;
+            }
+
+            let html = '';
+            if (data.valido) {
+                resultado.className = 'result-box result-success';
+                html += '<strong>Recurso de glosa válido.</strong>';
+                if (data.resumo && data.resumo.guia) {
+                    html += '<br>Guia: ' + escaparHtml(data.resumo.guia);
+                }
+            } else {
+                resultado.className = 'result-box result-error';
+                html += '<strong>Foram encontrados problemas:</strong><ul>';
+                (data.erros || []).forEach(function (erro) { html += '<li>' + escaparHtml(erro) + '</li>'; });
+                html += '</ul>';
+            }
+
+            if (data.avisos && data.avisos.length) {
+                html += '<div class="mt-2 pt-2 border-top"><strong>Avisos:</strong><ul>';
+                data.avisos.forEach(function (aviso) { html += '<li>' + escaparHtml(aviso) + '</li>'; });
+                html += '</ul></div>';
+            }
+            resultado.innerHTML = html;
+        } catch (erro) {
+            resultado.className = 'result-box result-error';
+            resultado.textContent = 'Falha ao validar: ' + erro.message;
+        }
+    }
+</script>
 </body>
 </html>
